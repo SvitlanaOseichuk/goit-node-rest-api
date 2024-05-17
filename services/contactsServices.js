@@ -7,7 +7,7 @@ const contactsPath = path.resolve("db", "contacts.json");
 
 
 async function readFile() {
-    const data = await fs.readFile(contactsPath, {encoding: "utf-8"});
+    const data = await fs.readFile(contactsPath, {encoding: "utf-8" } );
     return JSON.parse(data);
 }
 
@@ -57,6 +57,8 @@ async function removeContact(id) {
     return removedContact
 }
   
+
+
 async function addContact(contact) {
     const contacts = await readFile();
 
@@ -68,11 +70,37 @@ async function addContact(contact) {
 
     return newContact;
 }
+
+//дописвть валідацію
+
+async function updateContact(id, contact) {
+  const contacts = await readFile();
+
+  const index = contacts.findIndex((contact) => contact.id === id)
+
+  if (index === -1) {
+      return null
+  }
+
+  const updatedContact = {...contact, id};
+
+  const newContact = [
+      ...contacts.slice(0, index),
+      updatedContact,
+      ...contacts.slice(index + 1),
+  ]
+
+  await writeFile(newContact); 
+
+  return updatedContact;
+}
+// 
   
 
 export default {
   listContacts,
   getContactById,
   removeContact,
-  addContact
+  addContact,
+  updateContact
 }
