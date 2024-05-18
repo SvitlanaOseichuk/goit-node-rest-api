@@ -6,6 +6,7 @@ import crypto from "crypto"
 const contactsPath = path.resolve("db", "contacts.json");
 
 
+
 async function readFile() {
     const data = await fs.readFile(contactsPath, {encoding: "utf-8" } );
     return JSON.parse(data);
@@ -39,6 +40,7 @@ async function getContactById(id) {
 }
   
 
+
 async function removeContact(id) {
     const contacts = await readFile();
 
@@ -71,7 +73,7 @@ async function addContact(contact) {
     return newContact;
 }
 
-//дописвть валідацію
+
 
 async function updateContact(id, contact) {
   const contacts = await readFile();
@@ -94,7 +96,7 @@ async function updateContact(id, contact) {
 
   return updatedContact;
 }
-// 
+
   
 
 export default {
