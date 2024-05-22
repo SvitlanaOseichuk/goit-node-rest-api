@@ -74,6 +74,7 @@ export const createContact = async (req, res, next) => {
 
 
 
+
 export const updateContact = async (req, res, next) => {
     const { id } = req.params;
     const { name, email, phone } = req.body;
@@ -82,15 +83,24 @@ export const updateContact = async (req, res, next) => {
         return next(HttpError(400, "Body must have at least one field"));
     }
 
-    const contact = { name, email, phone };
-    const { error, value } = updateContactSchema.validate(contact);
-
-    if (error) {
-        return next(HttpError(400, error.message));
-    }
-    
     try {
-        const newContact = await contactsService.updateContact(id, { name, email, phone });
+        const existingContact = await contactsService.getContactById(id);
+        if (!existingContact) {
+            return res.status(404).json({ message: 'Not found' });
+        }
+
+        const updatedContact = {
+            name: name !== undefined ? name : existingContact.name,
+            email: email !== undefined ? email : existingContact.email,
+            phone: phone !== undefined ? phone : existingContact.phone
+        };
+
+        const { error, value } = updateContactSchema.validate(updatedContact);
+        if (error) {
+            return next(HttpError(400, error.message));
+        }
+
+        const newContact = await contactsService.updateContact(id, updatedContact);
         res.status(200).json(newContact);
     } catch (error) {
         if (error.message === 'Not found') {
