@@ -1,4 +1,4 @@
-import {createContactSchema, updateContactSchema} from "../schemas/contactsSchemas.js";
+import {createContactSchema, updateContactSchema, updateFavoriteSchema} from "../schemas/contactsSchemas.js";
 import HttpError from "../helpers/HttpError.js";
 import Contact from "../models/contacts.js"
 
@@ -87,7 +87,6 @@ export const createContact = async (req, res, next) => {
 
 
 
-
 export const updateContact = async (req, res, next) => {
 
     try {
@@ -105,7 +104,7 @@ export const updateContact = async (req, res, next) => {
 
         if (!name && !email && !phone) {
             return next(HttpError(400, "Body must have at least one field"));
-        }//redo
+        }
 
     
         const existingContact = await Contact.findById(id);
@@ -144,34 +143,65 @@ export const updateContact = async (req, res, next) => {
 
 
 
-
 export const updateFavoriteContact = async (req, res, next) => {
-    const { contactId } = req.params;
-    const { favorite } = req.body;
-
-    if (favorite === undefined) {
-        return next(HttpError(400, "Favorite field is required"));
-    }
-
+    
     try {
-        const { error, value } = updateContactSchema.validate({ favorite });
+
+        const { id } = req.params;
+        const { name, email, phone, favorite } = req.body;
+
+
+        if (favorite === undefined) {
+            return next(HttpError(400, "Missing field favorite"));
+        }
+
+        
+        const existingContact = await Contact.findById(id);
+        if (!existingContact) {
+            throw HttpError(404, "Not found");
+        }
+
+
+        const updatedContact = {
+            name: name !== undefined ? name : existingContact.name,
+            email: email !== undefined ? email : existingContact.email,
+            phone: phone !== undefined ? phone : existingContact.phone,
+            favorite: favorite !== undefined ? favorite : existingContact.favorite
+        };
+
+
+        const { error, value } = updateContactSchema.validate(updatedContact);
         if (error) {
             return next(HttpError(400, error.message));
         }
 
-        const updatedContact = await Contact.findByIdAndUpdate(contactId, { favorite }, { new: true });
+        
+        const newContact = await updateStatusContact(id, updatedContact, { new: true });
 
-        if (!updatedContact) {
+        res.status(200).json(newContact);
+
+    } catch (error) {
+        
+        if (error.message === 'Not found') {
             throw HttpError(404, "Not found");
         }
-
-        res.status(200).json(updatedContact);
-    } catch (error) {
+        
         next(error);
     }
 };
 
 
-// • Якщо з body все добре, викликає функцію
-//  updateStatusContact (contactId, body) (напиши її)
-//   для поновлення контакту в базі
+const updateStatusContact = async (id, body) => {
+
+    const existingContact = await Contact.findById(id);
+
+    if (!existingContact) {
+        throw new Error("Not found");
+    }
+
+    existingContact.favorite = body.favorite;
+
+    await existingContact.save();
+    
+    return existingContact;
+};
