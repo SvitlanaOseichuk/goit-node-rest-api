@@ -65,6 +65,7 @@ export const createContact = async (req, res, next) => {
         name: req.body.name,
         email: req.body.email,
         phone: req.body.phone,
+        favorite: req.body.favorite
     }
 
 
@@ -92,12 +93,13 @@ export const updateContact = async (req, res, next) => {
     try {
 
         const { id } = req.params;
-        const { name, email, phone } = req.body;
+        const { name, email, phone, favorite } = req.body;
 
         const contact = {
             name: req.body.name,
             email: req.body.email,
             phone: req.body.phone,
+            favorite: req.body.favorite
         }
 
 
@@ -108,14 +110,15 @@ export const updateContact = async (req, res, next) => {
     
         const existingContact = await Contact.findById(id);
         if (!existingContact) {
-            return res.status(404).json({ message: 'Not found' });
+            throw HttpError(404, "Not found");
         }
 
 
         const updatedContact = {
             name: name !== undefined ? name : existingContact.name,
             email: email !== undefined ? email : existingContact.email,
-            phone: phone !== undefined ? phone : existingContact.phone
+            phone: phone !== undefined ? phone : existingContact.phone,
+            favorite: favorite !== undefined ? favorite : existingContact.favorite
         };
 
 
@@ -132,9 +135,43 @@ export const updateContact = async (req, res, next) => {
     } catch (error) {
         
         if (error.message === 'Not found') {
-            return res.status(404).json({ message: 'Not found' });
+            throw HttpError(404, "Not found");
         }
         
         next(error);
     }
 };
+
+
+
+
+export const updateFavoriteContact = async (req, res, next) => {
+    const { contactId } = req.params;
+    const { favorite } = req.body;
+
+    if (favorite === undefined) {
+        return next(HttpError(400, "Favorite field is required"));
+    }
+
+    try {
+        const { error, value } = updateContactSchema.validate({ favorite });
+        if (error) {
+            return next(HttpError(400, error.message));
+        }
+
+        const updatedContact = await Contact.findByIdAndUpdate(contactId, { favorite }, { new: true });
+
+        if (!updatedContact) {
+            throw HttpError(404, "Not found");
+        }
+
+        res.status(200).json(updatedContact);
+    } catch (error) {
+        next(error);
+    }
+};
+
+
+// • Якщо з body все добре, викликає функцію
+//  updateStatusContact (contactId, body) (напиши її)
+//   для поновлення контакту в базі
