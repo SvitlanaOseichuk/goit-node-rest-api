@@ -1,6 +1,7 @@
 import {createContactSchema, updateContactSchema, updateFavoriteSchema} from "../schemas/contactsSchemas.js";
 import HttpError from "../helpers/HttpError.js";
-import Contact from "../models/contacts.js"
+import Contact from "../models/contacts.js";
+import mongoose from "mongoose";
 
 
 
@@ -50,7 +51,7 @@ export const deleteContact = async (req, res, next) => {
             throw HttpError(404, "Not found");
         } 
 
-        res.status(200).end();
+        res.status(200).send(deletedContact);
 
     } catch (error) {
         next(error);
@@ -131,12 +132,7 @@ export const updateContact = async (req, res, next) => {
 
         res.status(200).json(newContact);
 
-    } catch (error) {
-        
-        if (error.message === 'Not found') {
-            throw HttpError(404, "Not found");
-        }
-        
+    } catch (error) {        
         next(error);
     }
 };
@@ -148,8 +144,12 @@ export const updateFavoriteContact = async (req, res, next) => {
     try {
 
         const { id } = req.params;
-        const { name, email, phone, favorite } = req.body;
+        const { favorite } = req.body;
 
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return next(HttpError(400, "Invalid ID format"));
+        }
 
         if (favorite === undefined) {
             return next(HttpError(400, "Missing field favorite"));
@@ -162,30 +162,22 @@ export const updateFavoriteContact = async (req, res, next) => {
         }
 
 
-        const updatedContact = {
-            name: name !== undefined ? name : existingContact.name,
-            email: email !== undefined ? email : existingContact.email,
-            phone: phone !== undefined ? phone : existingContact.phone,
+        const updatedFavContact = {
             favorite: favorite !== undefined ? favorite : existingContact.favorite
         };
 
 
-        const { error, value } = updateContactSchema.validate(updatedContact);
+        const { error, value } = updateFavoriteSchema.validate(updatedFavContact);
         if (error) {
             return next(HttpError(400, error.message));
         }
 
         
-        const newContact = await updateStatusContact(id, updatedContact, { new: true });
+        const newContact = await updateStatusContact(id, updatedFavContact, { new: true });
 
         res.status(200).json(newContact);
 
-    } catch (error) {
-        
-        if (error.message === 'Not found') {
-            throw HttpError(404, "Not found");
-        }
-        
+    } catch (error) {        
         next(error);
     }
 };
@@ -194,7 +186,6 @@ export const updateFavoriteContact = async (req, res, next) => {
 const updateStatusContact = async (id, body) => {
 
     const existingContact = await Contact.findById(id);
-
     if (!existingContact) {
         throw new Error("Not found");
     }
