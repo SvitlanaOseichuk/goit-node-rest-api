@@ -28,7 +28,7 @@ export const getOneContact = async (req, res, next) => {
         const contact = await Contact.findById(id);
 
         if (contact === null) {
-            throw HttpError(404, "Not found");
+            return next(HttpError(404, "Not found"));
         }
 
         res.status(200).send(contact);
@@ -48,7 +48,7 @@ export const deleteContact = async (req, res, next) => {
         const deletedContact = await Contact.findByIdAndDelete(id);
 
         if (deletedContact === null) {
-            throw HttpError(404, "Not found");
+            return next(HttpError(404, "Not found"));
         } 
 
         res.status(200).send(deletedContact);
@@ -110,7 +110,7 @@ export const updateContact = async (req, res, next) => {
     
         const existingContact = await Contact.findById(id);
         if (!existingContact) {
-            throw HttpError(404, "Not found");
+            return next(HttpError(404, "Not found"));
         }
 
 
@@ -158,7 +158,7 @@ export const updateFavoriteContact = async (req, res, next) => {
         
         const existingContact = await Contact.findById(id);
         if (!existingContact) {
-            throw HttpError(404, "Not found");
+            return next(HttpError(404, "Not found"));
         }
 
 
@@ -187,7 +187,7 @@ const updateStatusContact = async (id, body) => {
 
     const existingContact = await Contact.findById(id);
     if (!existingContact) {
-        throw new Error("Not found");
+        return next(HttpError(404, "Not found"));
     }
 
     existingContact.favorite = body.favorite;
