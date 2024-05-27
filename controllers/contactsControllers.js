@@ -24,6 +24,10 @@ export const getOneContact = async (req, res, next) => {
    
     const { id } = req.params;
 
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return next(HttpError(400, "Invalid ID format"));
+    }
+
     try {
         const contact = await Contact.findById(id);
 
