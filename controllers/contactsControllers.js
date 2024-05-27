@@ -28,7 +28,7 @@ export const getOneContact = async (req, res, next) => {
         const contact = await Contact.findById(id);
 
         if (contact === null) {
-            return next(HttpError(404, "Not found"));
+            return next(HttpError(404));
         }
 
         res.status(200).send(contact);
@@ -44,11 +44,15 @@ export const deleteContact = async (req, res, next) => {
 
     const { id } = req.params;
 
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return next(HttpError(400, "Invalid ID format"));
+    }
+
     try {
         const deletedContact = await Contact.findByIdAndDelete(id);
 
         if (deletedContact === null) {
-            return next(HttpError(404, "Not found"));
+            return next(HttpError(404));
         } 
 
         res.status(200).send(deletedContact);
@@ -103,6 +107,11 @@ export const updateContact = async (req, res, next) => {
         }
 
 
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return next(HttpError(400, "Invalid ID format"));
+        }
+
+
         if (!name && !email && !phone) {
             return next(HttpError(400, "Body must have at least one field"));
         }
@@ -110,7 +119,7 @@ export const updateContact = async (req, res, next) => {
     
         const existingContact = await Contact.findById(id);
         if (!existingContact) {
-            return next(HttpError(404, "Not found"));
+            return next(HttpError(404));
         }
 
 
@@ -158,7 +167,7 @@ export const updateFavoriteContact = async (req, res, next) => {
         
         const existingContact = await Contact.findById(id);
         if (!existingContact) {
-            return next(HttpError(404, "Not found"));
+            return next(HttpError(404));
         }
 
 
@@ -187,7 +196,7 @@ const updateStatusContact = async (id, body) => {
 
     const existingContact = await Contact.findById(id);
     if (!existingContact) {
-        return next(HttpError(404, "Not found"));
+        return next(HttpError(404));
     }
 
     existingContact.favorite = body.favorite;
