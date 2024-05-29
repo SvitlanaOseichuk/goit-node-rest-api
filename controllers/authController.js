@@ -103,7 +103,7 @@ async function logout(req, res, next) {
 
         await User.findByIdAndUpdate(req.user.id, {token: null});
         
-        res.status(200).end();
+        res.status(204).end();
 
     } catch (error) {
 
