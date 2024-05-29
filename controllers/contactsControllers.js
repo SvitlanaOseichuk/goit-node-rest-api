@@ -9,7 +9,7 @@ import mongoose from "mongoose";
 export const getAllContacts = async (req, res, next) => {
 
     try {
-        const contacts = await Contact.find();
+        const contacts = await Contact.find({owner: req.user.id});
 
         res.status(200).send(contacts);
 
@@ -29,13 +29,21 @@ export const getOneContact = async (req, res, next) => {
     }
 
     try {
-        const contact = await Contact.findById(id);
+
+         const contact = await Contact.findById(id);
+
 
         if (contact === null) {
             return next(HttpError(404));
+          }
+
+
+        if (contact.owner.toString() !== req.user.id) {
+            return next(HttpError(404));
+       
         }
 
-        res.status(200).send(contact);
+        res.status(200).json(contact);
 
     } catch (error) {
         next(error);
@@ -74,7 +82,8 @@ export const createContact = async (req, res, next) => {
         name: req.body.name,
         email: req.body.email,
         phone: req.body.phone,
-        favorite: req.body.favorite
+        favorite: req.body.favorite,
+        owner: req.user.id
     }
 
 

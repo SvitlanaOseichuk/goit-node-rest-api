@@ -22,6 +22,12 @@ const contactSchemas = new mongoose.Schema({
         required: false,
         default: false,
       },
+      owner: {
+        type: mongoose.Schema.Types.ObjectId,
+        // ref: 'user',
+        required: true,
+      }
+  
 }, {
     versionKey: false,
     timestamps: true
