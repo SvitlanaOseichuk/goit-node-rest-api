@@ -90,6 +90,7 @@ async function login(req, res, next) {
         res.status(200).json({token, user: { email: email, subscription: user.subscription } });
 
     } catch (error) {
+        
         next(error);
     }
 }
@@ -102,7 +103,7 @@ async function logout(req, res, next) {
 
         await User.findByIdAndUpdate(req.user.id, {token: null});
         
-        res.status(200).json({token,  user: { email: email, subscription: user.subscription } });
+        res.status(200).end();
 
     } catch (error) {
 
@@ -115,9 +116,14 @@ async function logout(req, res, next) {
 async function current(req, res, next) {
 
     try{
-        const { email, subscription } = req.user;
-        res.status(200).json( {email, subscription} );
+        const { email } = req.user;
+
+        const user = await User.findOne({email});
+
+        res.status(200).json({ email: email, subscription: user.subscription });
+
     } catch(error) {
+
         next(error)
     }
 }
