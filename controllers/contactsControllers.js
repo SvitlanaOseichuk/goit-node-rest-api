@@ -40,7 +40,6 @@ export const getOneContact = async (req, res, next) => {
 
         if (contact.owner.toString() !== req.user.id) {
             return next(HttpError(404));
-       
         }
 
         res.status(200).json(contact);
@@ -65,7 +64,12 @@ export const deleteContact = async (req, res, next) => {
 
         if (deletedContact === null) {
             return next(HttpError(404));
-        } 
+        }
+        
+
+        if (contact.owner.toString() !== req.user.id) {
+            return next(HttpError(404));
+        }
 
         res.status(200).send(deletedContact);
 
@@ -135,6 +139,11 @@ export const updateContact = async (req, res, next) => {
             return next(HttpError(404));
         }
 
+        if (contact.owner.toString() !== req.user.id) {
+            return next(HttpError(404));
+       
+        }
+
 
         const updatedContact = {
             name: name !== undefined ? name : existingContact.name,
@@ -184,6 +193,12 @@ export const updateFavoriteContact = async (req, res, next) => {
         }
 
 
+        if (contact.owner.toString() !== req.user.id) {
+            return next(HttpError(404));
+       
+        }
+
+
         const updatedFavContact = {
             favorite: favorite !== undefined ? favorite : existingContact.favorite
         };
@@ -211,6 +226,13 @@ const updateStatusContact = async (id, body) => {
     if (!existingContact) {
         return next(HttpError(404));
     }
+
+
+    if (contact.owner.toString() !== req.user.id) {
+        return next(HttpError(404));
+   
+    }
+    
 
     existingContact.favorite = body.favorite;
 
