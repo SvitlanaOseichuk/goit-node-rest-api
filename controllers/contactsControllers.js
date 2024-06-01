@@ -51,8 +51,8 @@ export const getOneContact = async (req, res, next) => {
 
 
 
-export const deleteContact = async (req, res, next) => {
 
+export const deleteContact = async (req, res, next) => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -60,19 +60,19 @@ export const deleteContact = async (req, res, next) => {
     }
 
     try {
-        const deletedContact = await Contact.findByIdAndDelete(id);
+        const contact = await Contact.findById(id);
 
-        if (deletedContact === null) {
+        if (!contact) {
             return next(HttpError(404));
         }
-        
 
         if (contact.owner.toString() !== req.user.id) {
-            return next(HttpError(404));
+            return next(HttpError(403, "Access denied"));
         }
 
-        res.status(200).send(deletedContact);
+        const deletedContact = await Contact.findByIdAndDelete(id);
 
+        res.status(200).send(deletedContact);
     } catch (error) {
         next(error);
     }
@@ -116,13 +116,6 @@ export const updateContact = async (req, res, next) => {
         const { id } = req.params;
         const { name, email, phone, favorite } = req.body;
 
-        const contact = {
-            name: req.body.name,
-            email: req.body.email,
-            phone: req.body.phone,
-            favorite: req.body.favorite
-        }
-
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return next(HttpError(400, "Invalid ID format"));
@@ -139,7 +132,7 @@ export const updateContact = async (req, res, next) => {
             return next(HttpError(404));
         }
 
-        if (contact.owner.toString() !== req.user.id) {
+        if (existingContact.owner.toString() !== req.user.id) {
             return next(HttpError(404));
        
         }
@@ -177,7 +170,6 @@ export const updateFavoriteContact = async (req, res, next) => {
         const { id } = req.params;
         const { favorite } = req.body;
 
-
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return next(HttpError(400, "Invalid ID format"));
         }
@@ -193,7 +185,7 @@ export const updateFavoriteContact = async (req, res, next) => {
         }
 
 
-        if (contact.owner.toString() !== req.user.id) {
+        if (existingContact.owner.toString() !== req.user.id) {
             return next(HttpError(404));
        
         }
@@ -227,12 +219,6 @@ const updateStatusContact = async (id, body) => {
         return next(HttpError(404));
     }
 
-
-    if (contact.owner.toString() !== req.user.id) {
-        return next(HttpError(404));
-   
-    }
-    
 
     existingContact.favorite = body.favorite;
 
