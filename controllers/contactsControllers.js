@@ -9,7 +9,7 @@ import mongoose from "mongoose";
 export const getAllContacts = async (req, res, next) => {
 
     try {
-        const contacts = await Contact.find();
+        const contacts = await Contact.find({owner: req.user.id});
 
         res.status(200).send(contacts);
 
@@ -29,13 +29,20 @@ export const getOneContact = async (req, res, next) => {
     }
 
     try {
-        const contact = await Contact.findById(id);
+
+         const contact = await Contact.findById(id);
+
 
         if (contact === null) {
             return next(HttpError(404));
+          }
+
+
+        if (contact.owner.toString() !== req.user.id) {
+            return next(HttpError(404));
         }
 
-        res.status(200).send(contact);
+        res.status(200).json(contact);
 
     } catch (error) {
         next(error);
@@ -44,8 +51,8 @@ export const getOneContact = async (req, res, next) => {
 
 
 
-export const deleteContact = async (req, res, next) => {
 
+export const deleteContact = async (req, res, next) => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -53,14 +60,19 @@ export const deleteContact = async (req, res, next) => {
     }
 
     try {
+        const contact = await Contact.findById(id);
+
+        if (!contact) {
+            return next(HttpError(404));
+        }
+
+        if (contact.owner.toString() !== req.user.id) {
+            return next(HttpError(403, "Access denied"));
+        }
+
         const deletedContact = await Contact.findByIdAndDelete(id);
 
-        if (deletedContact === null) {
-            return next(HttpError(404));
-        } 
-
         res.status(200).send(deletedContact);
-
     } catch (error) {
         next(error);
     }
@@ -74,7 +86,8 @@ export const createContact = async (req, res, next) => {
         name: req.body.name,
         email: req.body.email,
         phone: req.body.phone,
-        favorite: req.body.favorite
+        favorite: req.body.favorite,
+        owner: req.user.id
     }
 
 
@@ -103,13 +116,6 @@ export const updateContact = async (req, res, next) => {
         const { id } = req.params;
         const { name, email, phone, favorite } = req.body;
 
-        const contact = {
-            name: req.body.name,
-            email: req.body.email,
-            phone: req.body.phone,
-            favorite: req.body.favorite
-        }
-
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return next(HttpError(400, "Invalid ID format"));
@@ -124,6 +130,11 @@ export const updateContact = async (req, res, next) => {
         const existingContact = await Contact.findById(id);
         if (!existingContact) {
             return next(HttpError(404));
+        }
+
+        if (existingContact.owner.toString() !== req.user.id) {
+            return next(HttpError(404));
+       
         }
 
 
@@ -159,7 +170,6 @@ export const updateFavoriteContact = async (req, res, next) => {
         const { id } = req.params;
         const { favorite } = req.body;
 
-
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return next(HttpError(400, "Invalid ID format"));
         }
@@ -172,6 +182,12 @@ export const updateFavoriteContact = async (req, res, next) => {
         const existingContact = await Contact.findById(id);
         if (!existingContact) {
             return next(HttpError(404));
+        }
+
+
+        if (existingContact.owner.toString() !== req.user.id) {
+            return next(HttpError(404));
+       
         }
 
 
@@ -202,6 +218,7 @@ const updateStatusContact = async (id, body) => {
     if (!existingContact) {
         return next(HttpError(404));
     }
+
 
     existingContact.favorite = body.favorite;
 
