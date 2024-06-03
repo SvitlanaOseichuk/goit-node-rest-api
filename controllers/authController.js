@@ -1,10 +1,11 @@
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken"
+import jwt from "jsonwebtoken";
+import gravatar from "gravatar";
 
 
 import HttpError from "../helpers/HttpError.js";
 import User from "../models/user.js";
-import { authSchema } from "../schemas/authSchemas.js";
+import { authSchemaLogin, authSchemaRegister } from "../schemas/authSchemas.js";
 
 
 
@@ -12,14 +13,16 @@ async function register(req, res, next) {
     try{
 
         const {email, password} = req.body;
+        const avatarURL = gravatar.url(email, { s: '250', r: 'pg', d: 'identicon' }, true);
 
         const userData = {
             email: req.body.email,
-            password: req.body.password
+            password: req.body.password,
+            avatarURL: avatarURL
         } 
 
         
-        const { error, value } = authSchema.validate(userData);
+        const { error, value } = authSchemaRegister.validate(userData);
 
         if (error) {
             return next(HttpError(400, error.message));
@@ -35,7 +38,7 @@ async function register(req, res, next) {
 
         const passwordHash = await bcrypt.hash(password, 10);
        
-        await User.create({ email, password: passwordHash});
+        await User.create({ email, password: passwordHash, avatarURL});
 
     
         res.status(201).json({ user: { email: email, password: password } });
@@ -50,15 +53,15 @@ async function register(req, res, next) {
 
 async function login(req, res, next) {
     try {
-        const {email, password} = req.body;
+        const{email, password} = req.body;
 
         const userData = {
             email: req.body.email,
-            password: req.body.password
+            password: req.body.password,
         } 
 
         
-        const { error, value } = authSchema.validate(userData);
+        const { error, value } = authSchemaLogin.validate(userData);
 
         if (error) {
             return next(HttpError(400, error.message));
