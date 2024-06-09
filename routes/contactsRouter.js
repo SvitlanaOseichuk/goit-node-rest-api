@@ -6,7 +6,7 @@ import {
   createContact,
   updateContact,
   updateFavoriteContact
-} from "../controllers/contactsControllers.js";
+} from "../controllers/contactsController.js";
 
 const contactsRouter = express.Router();
 
