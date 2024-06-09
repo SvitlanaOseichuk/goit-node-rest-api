@@ -12,4 +12,6 @@ router.post("/login", jsonParser, AuthController.login);
 router.post("/logout", authMiddleware, AuthController.logout);
 router.get("/current", authMiddleware, AuthController.current)
 
+
+
 export default router;

@@ -1,8 +1,9 @@
+import crypto from "node:crypto";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import gravatar from "gravatar";
 
-
+import mail from "../mail.js";
 import HttpError from "../helpers/HttpError.js";
 import User from "../models/user.js";
 import { authSchemaLogin, authSchemaRegister } from "../schemas/authSchemas.js";
@@ -38,7 +39,17 @@ async function register(req, res, next) {
 
         const passwordHash = await bcrypt.hash(password, 10);
        
-        await User.create({ email, password: passwordHash, avatarURL});
+        const verificationToken = crypto.randomUUID();
+
+        mail.sendMail({
+            to: email,
+            from: "svitlanaoseichuk@gmail.com",
+            subject: "welcome",
+            html: `to confirm your email click on <a href="http://localhost:3000/users/verify/${verificationToken}">link</a>`,
+            text: `to confirm your email open the link http://localhost:3000/users/verify/${verificationToken}`
+        })
+
+        await User.create({ email, password: passwordHash, avatarURL, verificationToken});
 
     
         res.status(201).json({ user: { email: email, password: password } });
@@ -81,6 +92,9 @@ async function login(req, res, next) {
             return next(HttpError(401, "Email or password is wrong"));
         }
 
+        if(user.verify === false) {
+            return next(HttpError(401, "Please, verify your email"));
+        } 
 
         const token = jwt.sign(
             {id: user._id, email: user.email},
